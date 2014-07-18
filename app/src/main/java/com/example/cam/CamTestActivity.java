@@ -23,17 +23,10 @@ import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
-import android.hardware.Camera.AutoFocusCallback;
-import android.hardware.Camera.PictureCallback;
-import android.hardware.Camera.ShutterCallback;
 import android.hardware.Camera.PreviewCallback;
 import android.hardware.Camera.Size;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.SurfaceView;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.View.OnLongClickListener;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
@@ -41,7 +34,6 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
-import com.jetpac.deepbelief.DeepBelief;
 import com.jetpac.deepbelief.DeepBelief.JPCNNLibrary;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -57,8 +49,15 @@ public class CamTestActivity extends Activity {
 	Activity act;
 	Context ctx;
 	Pointer networkHandle = null;
+    private Pointer scratchCanPredictor;
+    private Pointer guitarPredictor;
+    private Pointer hornsPredictor;
+    private Pointer maleVocalPredictor;
+    private Pointer banjoPredictor;
+    private Pointer bassPredictor;
 
-	@Override
+
+    @Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		ctx = this;
@@ -92,6 +91,7 @@ public class CamTestActivity extends Activity {
 	@Override
 	protected void onPause() {
 		if(camera != null) {
+            camera.setPreviewCallback(null);
 			camera.stopPreview();
 			preview.setCamera(null);
 			camera.release();
@@ -100,7 +100,13 @@ public class CamTestActivity extends Activity {
 		super.onPause();
 	}
 
-	private void resetCam() {
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        releaseDeepBelief();
+    }
+
+    private void resetCam() {
 		camera.startPreview();
 		preview.setCamera(camera);
 	}
@@ -125,9 +131,26 @@ public class CamTestActivity extends Activity {
 		copyAsset(am, baseFileName, networkFile);
 	    networkHandle = JPCNNLibrary.INSTANCE.jpcnn_create_network(networkFile);
 
+        scratchCanPredictor = JPCNNLibrary.INSTANCE.jpcnn_load_predictor(dataDir + "/" + "JBB_scratch_can.txt");
+        guitarPredictor = JPCNNLibrary.INSTANCE.jpcnn_load_predictor(dataDir + "/" + "JBB_guitar_can.txt");
+        hornsPredictor = JPCNNLibrary.INSTANCE.jpcnn_load_predictor(dataDir + "/" + "JBB_horns_can.txt");
+        maleVocalPredictor = JPCNNLibrary.INSTANCE.jpcnn_load_predictor(dataDir + "/" + "JBB_malevocal_can.txt");
+        banjoPredictor = JPCNNLibrary.INSTANCE.jpcnn_load_predictor(dataDir + "/" + "JBB_banjo_can.txt");
+        bassPredictor = JPCNNLibrary.INSTANCE.jpcnn_load_predictor(dataDir+"/"+"JBB_bass_can.txt");
+
 	    Bitmap lenaBitmap = getBitmapFromAsset("lena.png"); 
 	    classifyBitmap(lenaBitmap);
 	}
+
+    void releaseDeepBelief(){
+        JPCNNLibrary.INSTANCE.jpcnn_destroy_predictor(scratchCanPredictor);
+        JPCNNLibrary.INSTANCE.jpcnn_destroy_predictor(guitarPredictor);
+        JPCNNLibrary.INSTANCE.jpcnn_destroy_predictor(hornsPredictor);
+        JPCNNLibrary.INSTANCE.jpcnn_destroy_predictor(maleVocalPredictor);
+        JPCNNLibrary.INSTANCE.jpcnn_destroy_predictor(banjoPredictor);
+        JPCNNLibrary.INSTANCE.jpcnn_destroy_predictor(bassPredictor);
+        JPCNNLibrary.INSTANCE.jpcnn_destroy_network(networkHandle);
+    }
 	
 	private class PredictionLabel implements Comparable<PredictionLabel> {
 		public String name;
@@ -168,7 +191,7 @@ public class CamTestActivity extends Activity {
 	      networkHandle,
 	      imageHandle,
 	      0,
-	      0,
+	      -2,
 	      predictionsValuesRef,
 	      predictionsLengthRef,
 	      predictionsNamesRef,
@@ -186,14 +209,32 @@ public class CamTestActivity extends Activity {
 
         System.err.println(String.format("predictionsLength = %d", predictionsLength));
         
-	    float[] predictionsValues = predictionsValuesPointer.getFloatArray(0, predictionsLength);
-	    Pointer[] predictionsNames = predictionsNamesPointer.getPointerArray(0); 
-	    
+	    float[] predictionsValues = new float[6];
+	    Pointer[] predictionsNames = new Pointer[6];
+
+        predictionsNames[0] = scratchCanPredictor;
+        predictionsNames[1] = guitarPredictor;
+        predictionsNames[2] = hornsPredictor;
+        predictionsNames[3] = maleVocalPredictor;
+        predictionsNames[4] = banjoPredictor;
+        predictionsNames[5] = bassPredictor;
+
+        System.err.println("predict can1");
+        predictionsValues[0] = JPCNNLibrary.INSTANCE.jpcnn_predict(scratchCanPredictor, predictionsValuesPointer, predictionsNamesLength);
+        System.err.println("predict can2");
+        predictionsValues[1] = JPCNNLibrary.INSTANCE.jpcnn_predict(predictionsNames[1], predictionsValuesPointer, predictionsNamesLength);
+        predictionsValues[2] = JPCNNLibrary.INSTANCE.jpcnn_predict(predictionsNames[2], predictionsValuesPointer, predictionsNamesLength);
+        predictionsValues[3] = JPCNNLibrary.INSTANCE.jpcnn_predict(predictionsNames[3], predictionsValuesPointer, predictionsNamesLength);
+        predictionsValues[4] = JPCNNLibrary.INSTANCE.jpcnn_predict(predictionsNames[4], predictionsValuesPointer, predictionsNamesLength);
+        predictionsValues[5] = JPCNNLibrary.INSTANCE.jpcnn_predict(predictionsNames[5], predictionsValuesPointer, predictionsNamesLength);
+
+        System.err.println("predict cans end.");
+	    String names[] = {"scratch", "guitar", "horns", "maleVocal", "banjo", "bass"};
 	    ArrayList<PredictionLabel> foundLabels = new ArrayList<PredictionLabel>();
 	    for (int index = 0; index < predictionsLength; index += 1) {
 	    	final float predictionValue = predictionsValues[index];
 	    	if (predictionValue > 0.05f) {
-	    		String name = predictionsNames[index].getString(0);
+	    		String name = names[index];
 	            System.err.println(String.format("%s = %f", name, predictionValue));	    		
 	            PredictionLabel label = new PredictionLabel(name, predictionValue);
 	            foundLabels.add(label);
