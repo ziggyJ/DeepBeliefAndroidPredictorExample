@@ -131,24 +131,27 @@ public class CamTestActivity extends Activity {
 		copyAsset(am, baseFileName, networkFile);
 	    networkHandle = JPCNNLibrary.INSTANCE.jpcnn_create_network(networkFile);
 
-        scratchCanPredictor = JPCNNLibrary.INSTANCE.jpcnn_load_predictor(dataDir + "/" + "JBB_scratch_can.txt");
-        guitarPredictor = JPCNNLibrary.INSTANCE.jpcnn_load_predictor(dataDir + "/" + "JBB_guitar_can.txt");
-        hornsPredictor = JPCNNLibrary.INSTANCE.jpcnn_load_predictor(dataDir + "/" + "JBB_horns_can.txt");
-        maleVocalPredictor = JPCNNLibrary.INSTANCE.jpcnn_load_predictor(dataDir + "/" + "JBB_malevocal_can.txt");
-        banjoPredictor = JPCNNLibrary.INSTANCE.jpcnn_load_predictor(dataDir + "/" + "JBB_banjo_can.txt");
-        bassPredictor = JPCNNLibrary.INSTANCE.jpcnn_load_predictor(dataDir+"/"+"JBB_bass_can.txt");
+        String scratch = "JBB_scratch_can.txt";
+        copyAsset(am, scratch, dataDir + "/" + scratch);
+        scratchCanPredictor = JPCNNLibrary.INSTANCE.jpcnn_load_predictor(dataDir + "/" + scratch);
+        JPCNNLibrary.INSTANCE.jpcnn_save_predictor(dataDir + "/test.txt", scratchCanPredictor );
+//        guitarPredictor = JPCNNLibrary.INSTANCE.jpcnn_load_predictor(dataDir + "/" + "JBB_guitar_can.txt");
+//        hornsPredictor = JPCNNLibrary.INSTANCE.jpcnn_load_predictor(dataDir + "/" + "JBB_horns_can.txt");
+//        maleVocalPredictor = JPCNNLibrary.INSTANCE.jpcnn_load_predictor(dataDir + "/" + "JBB_malevocal_can.txt");
+//        banjoPredictor = JPCNNLibrary.INSTANCE.jpcnn_load_predictor(dataDir + "/" + "JBB_banjo_can.txt");
+//        bassPredictor = JPCNNLibrary.INSTANCE.jpcnn_load_predictor(dataDir+"/"+"JBB_bass_can.txt");
 
-	    Bitmap lenaBitmap = getBitmapFromAsset("lena.png"); 
+	    Bitmap lenaBitmap = getBitmapFromAsset("lena.png");
 	    classifyBitmap(lenaBitmap);
 	}
 
     void releaseDeepBelief(){
         JPCNNLibrary.INSTANCE.jpcnn_destroy_predictor(scratchCanPredictor);
-        JPCNNLibrary.INSTANCE.jpcnn_destroy_predictor(guitarPredictor);
-        JPCNNLibrary.INSTANCE.jpcnn_destroy_predictor(hornsPredictor);
-        JPCNNLibrary.INSTANCE.jpcnn_destroy_predictor(maleVocalPredictor);
-        JPCNNLibrary.INSTANCE.jpcnn_destroy_predictor(banjoPredictor);
-        JPCNNLibrary.INSTANCE.jpcnn_destroy_predictor(bassPredictor);
+//        JPCNNLibrary.INSTANCE.jpcnn_destroy_predictor(guitarPredictor);
+//        JPCNNLibrary.INSTANCE.jpcnn_destroy_predictor(hornsPredictor);
+//        JPCNNLibrary.INSTANCE.jpcnn_destroy_predictor(maleVocalPredictor);
+//        JPCNNLibrary.INSTANCE.jpcnn_destroy_predictor(banjoPredictor);
+//        JPCNNLibrary.INSTANCE.jpcnn_destroy_predictor(bassPredictor);
         JPCNNLibrary.INSTANCE.jpcnn_destroy_network(networkHandle);
     }
 	
@@ -190,7 +193,7 @@ public class CamTestActivity extends Activity {
 	    JPCNNLibrary.INSTANCE.jpcnn_classify_image(
 	      networkHandle,
 	      imageHandle,
-	      0,
+	      1<<1,
 	      -2,
 	      predictionsValuesRef,
 	      predictionsLengthRef,
@@ -208,25 +211,26 @@ public class CamTestActivity extends Activity {
 	    final int predictionsNamesLength = predictionsNamesLengthRef.getValue();
 
         System.err.println(String.format("predictionsLength = %d", predictionsLength));
-        
+        System.err.println(String.format("predictionsNamesLength = %d", predictionsNamesLength));
+
 	    float[] predictionsValues = new float[6];
 	    Pointer[] predictionsNames = new Pointer[6];
 
-        predictionsNames[0] = scratchCanPredictor;
-        predictionsNames[1] = guitarPredictor;
-        predictionsNames[2] = hornsPredictor;
-        predictionsNames[3] = maleVocalPredictor;
-        predictionsNames[4] = banjoPredictor;
-        predictionsNames[5] = bassPredictor;
+//        predictionsNames[0] = scratchCanPredictor;
+//        predictionsNames[1] = guitarPredictor;
+//        predictionsNames[2] = hornsPredictor;
+//        predictionsNames[3] = maleVocalPredictor;
+//        predictionsNames[4] = banjoPredictor;
+//        predictionsNames[5] = bassPredictor;
 
         System.err.println("predict can1");
-        predictionsValues[0] = JPCNNLibrary.INSTANCE.jpcnn_predict(scratchCanPredictor, predictionsValuesPointer, predictionsNamesLength);
+        predictionsValues[0] = JPCNNLibrary.INSTANCE.jpcnn_predict(scratchCanPredictor, predictionsValuesPointer, predictionsLength);
         System.err.println("predict can2");
-        predictionsValues[1] = JPCNNLibrary.INSTANCE.jpcnn_predict(predictionsNames[1], predictionsValuesPointer, predictionsNamesLength);
-        predictionsValues[2] = JPCNNLibrary.INSTANCE.jpcnn_predict(predictionsNames[2], predictionsValuesPointer, predictionsNamesLength);
-        predictionsValues[3] = JPCNNLibrary.INSTANCE.jpcnn_predict(predictionsNames[3], predictionsValuesPointer, predictionsNamesLength);
-        predictionsValues[4] = JPCNNLibrary.INSTANCE.jpcnn_predict(predictionsNames[4], predictionsValuesPointer, predictionsNamesLength);
-        predictionsValues[5] = JPCNNLibrary.INSTANCE.jpcnn_predict(predictionsNames[5], predictionsValuesPointer, predictionsNamesLength);
+//        predictionsValues[1] = JPCNNLibrary.INSTANCE.jpcnn_predict(predictionsNames[1], predictionsValuesPointer, predictionsNamesLength);
+//        predictionsValues[2] = JPCNNLibrary.INSTANCE.jpcnn_predict(predictionsNames[2], predictionsValuesPointer, predictionsNamesLength);
+//        predictionsValues[3] = JPCNNLibrary.INSTANCE.jpcnn_predict(predictionsNames[3], predictionsValuesPointer, predictionsNamesLength);
+//        predictionsValues[4] = JPCNNLibrary.INSTANCE.jpcnn_predict(predictionsNames[4], predictionsValuesPointer, predictionsNamesLength);
+//        predictionsValues[5] = JPCNNLibrary.INSTANCE.jpcnn_predict(predictionsNames[5], predictionsValuesPointer, predictionsNamesLength);
 
         System.err.println("predict cans end.");
 	    String names[] = {"scratch", "guitar", "horns", "maleVocal", "banjo", "bass"};
