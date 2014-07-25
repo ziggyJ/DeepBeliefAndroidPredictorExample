@@ -235,7 +235,7 @@ public class CamTestActivity extends Activity {
         System.err.println("predict cans end.");
 	    String names[] = {"scratch", "guitar", "horns", "maleVocal", "banjo", "bass"};
 	    ArrayList<PredictionLabel> foundLabels = new ArrayList<PredictionLabel>();
-	    for (int index = 0; index < predictionsLength; index += 1) {
+	    for (int index = 0; index < 6; index += 1) {
 	    	final float predictionValue = predictionsValues[index];
 	    	if (predictionValue > 0.05f) {
 	    		String name = names[index];
